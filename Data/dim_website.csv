@@ -1,0 +1,21 @@
+website_id,website_name,website_url,category
+1,Kaggle,https://www.kaggle.com,Learning
+2,Twitch,https://www.twitch.tv,Entertainment
+3,TikTok,https://www.tiktok.com,Social Media
+4,Wikipedia,https://www.wikipedia.org,Reference
+5,W3Schools,https://www.w3schools.com,Learning
+6,Twitter / X,https://www.twitter.com,Social Media
+7,Canva,https://www.canva.com,Design
+8,Facebook,https://www.facebook.com,Social Media
+9,LinkedIn,https://www.linkedin.com,Social Media
+10,Google,https://www.google.com,Search
+11,Netflix,https://www.netflix.com,Entertainment
+12,Coursera,https://www.coursera.org,Learning
+13,Instagram,https://www.instagram.com,Social Media
+14,ChatGPT,https://www.chatgpt.com,AI Tools
+15,Amazon,https://www.amazon.com,Shopping
+16,YouTube,https://www.youtube.com,Entertainment
+17,GitHub,https://www.github.com,Development
+18,Reddit,https://www.reddit.com,Community
+19,Spotify,https://www.spotify.com,Music
+20,Stack Overflow,https://www.stackoverflow.com,Development

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Browsing Analytics Dashboard</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:#08090d;
+  --surface:#111217;
+  --border:#242530;
+  --accent:#7c6cfa;
+  --accent2:#fa6c9a;
+  --accent3:#6cfacd;
+  --accent4:#fac86c;
+  --text:#e8e9f0;
+  --muted:#8a8d9f;
+  --radius:20px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial, sans-serif;
+  min-height:100vh;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(124,108,250,.18), transparent 30%),
+    radial-gradient(circle at 85% 80%, rgba(250,108,154,.14), transparent 30%),
+    radial-gradient(circle at 50% 10%, rgba(108,250,205,.10), transparent 25%);
+}
+
+header{
+  padding:28px 40px;
+  border-bottom:1px solid var(--border);
+  background:rgba(8,9,13,.85);
+}
+
+header h1{font-size:30px}
+header p{margin-top:6px;color:var(--muted);font-size:14px}
+
+main{
+  max-width:1200px;
+  margin:auto;
+  padding:32px 40px;
+}
+
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+  margin-bottom:24px;
+}
+
+.kpi{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:22px;
+}
+
+.label{color:var(--muted);font-size:13px;margin-bottom:8px}
+.value{font-size:34px;font-weight:700}
+
+.grid{
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:20px;
+  margin-bottom:20px;
+}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:24px;
+}
+
+.card h2{font-size:18px;margin-bottom:18px}
+.chart-box{height:300px}
+.full{margin-top:20px}
+
+@media(max-width:800px){
+  .kpis,.grid{grid-template-columns:1fr}
+  main{padding:22px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Web Browsing Analytics Dashboard</h1>
+  <p>Live dashboard connected to MySQL Data Warehouse</p>
+</header>
+
+<main>
+
+  <section class="kpis">
+    <div class="kpi">
+      <div class="label">Total Visits</div>
+      <div class="value" id="totalVisits">...</div>
+    </div>
+
+    <div class="kpi">
+      <div class="label">Total Users</div>
+      <div class="value" id="totalUsers">...</div>
+    </div>
+
+    <div class="kpi">
+      <div class="label">Total Websites</div>
+      <div class="value" id="totalWebsites">...</div>
+    </div>
+
+    <div class="kpi">
+      <div class="label">Active Days</div>
+      <div class="value" id="activeDays">...</div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Top Visited Websites</h2>
+      <div class="chart-box">
+        <canvas id="topSitesChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Visits by User</h2>
+      <div class="chart-box">
+        <canvas id="usersChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="card full">
+    <h2>Monthly Visits Trend</h2>
+    <div class="chart-box">
+      <canvas id="monthlyChart"></canvas>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const colors = [
+  "#7c6cfa",
+  "#fa6c9a",
+  "#6cfacd",
+  "#fac86c",
+  "#fa9c6c",
+  "#4cc9f0"
+];
+
+Chart.defaults.color = "#8a8d9f";
+Chart.defaults.font.family = "Arial";
+
+async function getData(query){
+  const response = await fetch("api.php?query=" + query);
+  const result = await response.json();
+
+  if(result.status !== "ok"){
+    console.error(result.message);
+    alert("API Error: " + result.message);
+    return [];
+  }
+
+  return result.data;
+}
+
+async function loadDashboard(){
+
+  const overview = await getData("overview");
+  const topSites = await getData("top_sites");
+  const users = await getData("users");
+  const monthly = await getData("monthly");
+
+  const o = overview[0];
+
+  document.getElementById("totalVisits").textContent = o.total_visits;
+  document.getElementById("totalUsers").textContent = o.total_users;
+  document.getElementById("totalWebsites").textContent = o.total_websites;
+  document.getElementById("activeDays").textContent = o.active_days;
+
+  new Chart(document.getElementById("topSitesChart"), {
+    type: "bar",
+    data: {
+      labels: topSites.map(row => row.website_name),
+      datasets: [{
+        label: "Visits",
+        data: topSites.map(row => row.visits),
+        backgroundColor: colors,
+        borderRadius: 10
+      }]
+    },
+    options: {
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false}},
+        y:{grid:{color:"rgba(255,255,255,.06)"}}
+      }
+    }
+  });
+
+  new Chart(document.getElementById("usersChart"), {
+    type: "doughnut",
+    data: {
+      labels: users.map(row => row.user_name),
+      datasets: [{
+        data: users.map(row => row.visits),
+        backgroundColor: colors,
+        borderWidth:0
+      }]
+    },
+    options: {
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{position:"bottom"}}
+    }
+  });
+
+  new Chart(document.getElementById("monthlyChart"), {
+    type: "line",
+    data: {
+      labels: monthly.map(row => row.month),
+      datasets: [{
+        label: "Visits",
+        data: monthly.map(row => row.visits),
+        borderColor:"#7c6cfa",
+        backgroundColor:"rgba(124,108,250,.15)",
+        fill:true,
+        tension:.4,
+        pointBackgroundColor:"#fa6c9a",
+        pointRadius:5
+      }]
+    },
+    options: {
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false}},
+        y:{grid:{color:"rgba(255,255,255,.06)"}}
+      }
+    }
+  });
+}
+
+loadDashboard();
+</script>
+
+</body>
+</html>
